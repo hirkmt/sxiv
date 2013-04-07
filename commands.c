@@ -41,6 +41,8 @@ void animate(void);
 void set_timeout(timeout_f, int, bool);
 void reset_timeout(timeout_f);
 
+static unsigned long lsqrt(unsigned long n);
+
 extern appmode_t mode;
 extern img_t img;
 extern tns_t tns;
@@ -55,6 +57,20 @@ extern int prefix;
 const int ss_delays[] = {
 	1, 2, 3, 5, 10, 15, 20, 30, 60, 120, 180, 300, 600
 };
+
+static unsigned long lsqrt(unsigned long n) {
+	unsigned long s, t;
+
+	if (n < 1) return 0;
+
+	s = n;
+	do {
+		t = s;
+		s = (n / s + s) / 2;
+	} while (s < t);
+
+	return t;
+}
 
 bool it_quit(arg_t a)
 {
@@ -157,6 +173,28 @@ bool it_remove_image(arg_t a)
 bool i_navigate(arg_t a)
 {
 	long n = (long) a;
+
+	if (mode == MODE_IMAGE) {
+		if (prefix > 0)
+			n *= prefix;
+		n += fileidx;
+		if (n < 0)
+			n = 0;
+		if (n >= filecnt)
+			n = filecnt - 1;
+
+		if (n != fileidx) {
+			load_image(n);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool i_navigate_sqrt(arg_t a) {
+	long n = (long) a;
+	unsigned long q = lsqrt(filecnt);
+	if (q > 0) n *= q;
 
 	if (mode == MODE_IMAGE) {
 		if (prefix > 0)
